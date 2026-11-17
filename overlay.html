@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game Controls Overlay</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:#fff}
+.panel{width:100%;padding:12px 16px;background:rgba(24,34,93,.72);border:1px solid rgba(160,190,255,.18);border-radius:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;column-gap:34px;row-gap:10px}
+.item{display:grid;grid-template-columns:minmax(150px,1fr) 100px;align-items:center;gap:10px;min-height:42px}
+.label{text-align:right;font-size:17px;font-weight:700;text-shadow:0 2px 3px #101638}
+.key{height:42px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:rgba(12,18,57,.88);border:1px solid rgba(255,255,255,.13);font-size:20px;font-weight:800;color:#fff;transition:.05s}
+.key.active{background:#66e7ff;color:#071326;border-color:#d2fbff;box-shadow:0 0 9px #66e7ff,0 0 20px rgba(102,231,255,.75)}
+.section{grid-column:1/-1;margin:8px -16px 2px;padding:7px 12px;text-align:center;background:rgba(75,128,218,.72);font-family:Georgia,serif;font-size:23px;font-weight:bold}
+#status{position:fixed;right:8px;top:5px;font-size:10px;color:rgba(255,255,255,.55)}
+#status.off{color:#ff9a9a}
+@media(max-width:600px){.grid{column-gap:12px}.item{grid-template-columns:minmax(90px,1fr) 65px;gap:6px}.label{font-size:12px}.key{font-size:16px;height:36px}.section{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="status">CONNECTING…</div>
+<div class="panel"><div class="grid">
+<div class="item"><div class="label">Move Left</div><div class="key" data-key="A">A</div></div>
+<div class="item"><div class="label">Move Right</div><div class="key" data-key="D">D</div></div>
+<div class="item"><div class="label">Move Up</div><div class="key" data-key="W">W</div></div>
+<div class="item"><div class="label">Move Down</div><div class="key" data-key="S">S</div></div>
+<div class="item"><div class="label">Jump</div><div class="key" data-key="SPACE">SPACE</div></div>
+<div class="item"><div class="label">Sell Hero</div><div class="key" data-key="R">R</div></div>
+<div class="item"><div class="label">Open Shop</div><div class="key" data-key="SPACE">SPACE</div></div>
+<div class="item"><div class="label">Upgrade Commander</div><div class="key" data-key="F">F</div></div>
+<div class="section">Shop Controls</div>
+<div class="item"><div class="label">Refresh the Shop</div><div class="key" data-key="E">E</div></div>
+<div class="item"><div class="label">Purchase Hero 1</div><div class="key" data-key="1">1</div></div>
+<div class="item"><div class="label">Purchase Hero 2</div><div class="key" data-key="2">2</div></div>
+<div class="item"><div class="label">Purchase Hero 3</div><div class="key" data-key="3">3</div></div>
+<div class="item"><div class="label">Purchase Hero 4</div><div class="key" data-key="4">4</div></div>
+<div class="item"><div class="label">Purchase Hero 5</div><div class="key" data-key="5">5</div></div>
+</div></div>
+<script>
+(() => {
+  // Replace this with your Cloudflare Quick Tunnel hostname, e.g.
+  // wss://example-name.trycloudflare.com
+  const WS_URL = "wss://YOUR-TUNNEL-NAME.trycloudflare.com";
+  const status = document.getElementById("status");
+  const map = new Map();
+  document.querySelectorAll("[data-key]").forEach(el => {
+    const k=el.dataset.key;
+    if(!map.has(k)) map.set(k,[]);
+    map.get(k).push(el);
+  });
+  function connect(){
+    if(WS_URL.includes("YOUR-TUNNEL-NAME")){
+      status.textContent="SET YOUR TUNNEL URL IN overlay.html"; status.classList.add("off"); return;
+    }
+    const ws=new WebSocket(WS_URL);
+    ws.onopen=()=>{status.textContent="LIVE INPUT CONNECTED";status.classList.remove("off")};
+    ws.onclose=()=>{status.textContent="RECONNECTING…";status.classList.add("off");setTimeout(connect,2000)};
+    ws.onerror=()=>{status.textContent="CONNECTION ERROR";status.classList.add("off")};
+    ws.onmessage=e=>{try{const m=JSON.parse(e.data);(map.get(m.key)||[]).forEach(el=>el.classList.toggle("active",!!m.down))}catch(_){}};
+  }
+  connect();
+})();
+</script>
+</body></html>
